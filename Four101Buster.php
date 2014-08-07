@@ -101,4 +101,4 @@ class Four101Buster {
   
 }
 
-$buster = new Four101Buster("http://icmindustrie.webqamapps.com");
+$buster = new Four101Buster("http://www.perdu.com");
