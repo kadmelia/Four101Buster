@@ -13,11 +13,18 @@ class Four101Buster {
     private $links = array();
 
     /**
-     * Already visited links.
+     * Found external links.
      *
      * @var array
      */
     private $externalLinks = array();
+
+    /**
+     * Broken links found.
+     *
+     * @var array
+     */
+    private $broken = array();
 	
 	/**
 	* Constructor
@@ -29,20 +36,24 @@ class Four101Buster {
 
         $this->parsePage($this->site);
 
-        print_r($this->links);
-        print_r($this->externalLinks);
+        $this->bust404s();
+
+        print_r($this->broken);
 
 	}
-	
-	private function parsePage($page) {
+
+    /**
+     * Parse a site a grab all link on it.
+     *
+     * Start with given URL and call itself on all links found.
+     *
+     * *RECURSIVE*
+     *
+     * @param $page URL to parse
+     */
+    private function parsePage($page) {
 
         // Get all link on a page
-        try {
-
-        } catch (Exception $e) {
-
-        }
-
         $qp = QueryPath::withHTML($page, 'a');
 
         $addresses = array();
@@ -81,10 +92,14 @@ class Four101Buster {
 
         }
 
-//        print_r($addresses);
-
 	}
 
+    /**
+     * Build full URL with URL without domain.
+     *
+     * @param $url
+     * @return string
+     */
     private function buildFullUrl($url) {
 
         // Check if URL is not already "full"
@@ -98,7 +113,48 @@ class Four101Buster {
         return $this->site . $url;
 
     }
-  
+
+    /**
+     * Bust 404 from parsed links.
+     *
+     * @return void
+     */
+    private function bust404s() {
+
+        foreach ($this->links as $link) {
+
+            if ($this->is404($link))
+                $this->broken[] = $link;
+
+        }
+
+    }
+
+    /**
+     * Check if given URL is a 404.
+     *
+     * @use cURL
+     * @param $url
+     * @return bool
+     */
+    private function is404($url) {
+
+        echo "Is 404 : $url\n";
+
+        $handle = curl_init($url);
+        curl_setopt($handle,  CURLOPT_RETURNTRANSFER, TRUE);
+
+        // Get the HTML or whatever is linked in $url.
+        $response = curl_exec($handle);
+
+        // Get return code
+        $httpCode = curl_getinfo($handle, CURLINFO_HTTP_CODE);
+
+        // Check for 404
+        return $httpCode == 404;
+
+    }
 }
 
-$buster = new Four101Buster("http://www.perdu.com");
+if (isset($argv[1]))
+    $buster = new Four101Buster($argv[1]);
